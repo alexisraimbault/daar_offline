@@ -34,7 +34,7 @@ public class Indexing {
 		    for(String line; (line = br.readLine()) != null; ++line_idx) 
 		    {
 		    	int begin_word = 0;
-		    	for(int idx = 1; idx < line.length(); ++idx)
+		    	for(int idx = 0; idx < line.length(); ++idx)
 		    	{
 		    		char c = line.charAt(idx);
 		    		if(c >= 'A' && c <= 'Z')
@@ -44,7 +44,7 @@ public class Indexing {
 		    			
 		    			if(begin_word != idx)
 		    			{
-		    				String word = line.substring(begin_word, idx);
+		    				String word = line.substring(begin_word, idx).toLowerCase();
 		    				if(result.containsKey(word))
 		    					result.get(word).add(new Match(line_idx, begin_word));
 		    				else{
