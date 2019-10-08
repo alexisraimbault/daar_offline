@@ -2,12 +2,13 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class Indexing {
+public class Indexing implements Serializable{
 	
-	public class Match
+	public class Match implements Serializable
 	{
 		public Match(int line, int index) {
 			super();
@@ -75,7 +76,7 @@ public class Indexing {
 	public static void main(String[] args) throws FileNotFoundException, IOException
 	{
 		Indexing tmp = new Indexing();
-		System.out.println(tmp.makeMatches("src/test_file.txt").get("Sargon").size());
+		System.out.println(tmp.makeMatches("src/test_file_3.txt"));
 	}
 	
 }

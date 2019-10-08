@@ -68,10 +68,10 @@ public class RegEx {
   {
 	  if(!motif.contains(".") && !motif.contains("*") && !motif.contains("|"))//que lettres, - et '
 	  {
-		  if(!motif.contains(" ") && !motif.contains("'"))
+		  if(!motif.contains(" "))
 		  {
-			  //return radixSearch TODO
-			  return null;
+			  RadixTree radix_tree = RadixTree.loadFromFile("radix.ser");// en partant du principe que le cache du fichier à lire existe
+			  return radix_tree.patternIndexList(motif, 0);
 		  }
 		  else
 		  {
