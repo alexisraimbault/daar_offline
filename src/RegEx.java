@@ -1,6 +1,5 @@
 import java.util.Scanner;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.io.BufferedReader;
@@ -70,8 +69,14 @@ public class RegEx {
 	  {
 		  if(!motif.contains(" "))
 		  {
-			  RadixTree radix_tree = RadixTree.loadFromFile("radix.ser");// en partant du principe que le cache du fichier à lire existe
-			  return radix_tree.patternIndexList(motif, 0);
+			  RadixTree radix = RadixTree.loadFromFile("radix.ser");// en partant du principe que le cache du fichier à lire existe
+			  ArrayList<Indexing.Match> result = radix.patternIndexList(motif, 0);
+			  RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");// en partant du principe que le cache du fichier à lire existe
+			  ArrayList<Indexing.Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(motif), 0);
+			  Indexing indexing = new Indexing();
+			  for(Indexing.Match m : result_reverse)
+					result.add(indexing .new Match(m.line, m.index - motif.length()));
+			  return result;
 		  }
 		  else
 		  {

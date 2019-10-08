@@ -8,9 +8,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-
-
-
 public class RadixTree implements java.io.Serializable {
 	
 	public RadixTree next;
@@ -18,6 +15,7 @@ public class RadixTree implements java.io.Serializable {
 	public String prefix;
 	public boolean terminal;
 	ArrayList<Indexing.Match> matches;
+	public static Indexing indexing = new Indexing();
 	
 	public RadixTree(String prefix, ArrayList<Indexing.Match> matches)
 	{
@@ -32,10 +30,9 @@ public class RadixTree implements java.io.Serializable {
 		this.matches = matches;
 	}
 	
-	public static RadixTree makeFromFile(String path) throws FileNotFoundException, IOException
+	public static RadixTree makeFromIndexing(HashMap<String, ArrayList<Indexing.Match>> matches) throws FileNotFoundException, IOException
 	{
-		Indexing indexing = new Indexing();
-		HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches(path);
+		
 		RadixTree result = null;
 		for(Entry<String, ArrayList<Indexing.Match>> pair : matches.entrySet())
 		{
@@ -44,8 +41,31 @@ public class RadixTree implements java.io.Serializable {
 			else
 				result.addWord2(pair.getKey(), pair.getValue());
 		}
-		
 		return result;
+	}
+	public static RadixTree makeFromIndexingReverse(HashMap<String, ArrayList<Indexing.Match>> matches) throws FileNotFoundException, IOException
+	{
+		
+		RadixTree result = null;
+		for(Entry<String, ArrayList<Indexing.Match>> pair : matches.entrySet())
+		{
+			String key = reverse(pair.getKey());
+			ArrayList<Indexing.Match> value = new ArrayList<Indexing.Match>();
+			for(Indexing.Match m : pair.getValue())
+				value.add(indexing.new Match(m.line, m.index + key.length()));
+			if(result == null)
+				result = new RadixTree(key, value);
+			else
+				result.addWord2(key, value);
+		}
+		return result;
+	}
+	
+	public static String reverse(String word)
+	{
+		StringBuilder sb = new StringBuilder(); 
+		sb.append(word);
+		return sb.reverse().toString();
 	}
 	
 	public void addWord2(String word, ArrayList<Indexing.Match> matches)
@@ -102,11 +122,12 @@ public class RadixTree implements java.io.Serializable {
 		int idx = 0;
 		if(word.length() - word_idx < prefix.length())
 		{
+			if(prefix.charAt(0)==word.charAt(word_idx) && prefix.startsWith(word.substring(word_idx, word.length())))//word is a prefix of a word in the text
+				return matches;
 			if(next != null)
 				return next.patternIndexList(word, word_idx);
 			else
 				return new ArrayList<Indexing.Match>();
-				
 		}
 			
 		for(idx = 0; idx < prefix.length(); ++idx, ++word_idx)
@@ -127,7 +148,6 @@ public class RadixTree implements java.io.Serializable {
 				if(word_idx == word.length())// found word
 					if (terminal)
 					{
-						System.out.println(prefix);
 						return matches;
 					}
 					else
@@ -190,52 +210,6 @@ public class RadixTree implements java.io.Serializable {
 	    }
 	}
 	
-	/*
-	public void addWord(String word, ArrayList<Indexing.Match> matches)
-	{
-		addWord(word, 0, matches);
-	}
-	
-	private void addWord(String word, int word_idx, ArrayList<Indexing.Match> matches)
-	{
-		char c = Character.toLowerCase(word.charAt(word_idx));
-		char pc = Character.toLowerCase(prefix.charAt(0));
-		if(c != pc)
-		{
-			if(next == null)
-				next = new RadixTree(word.substring(word_idx), matches);
-			else
-				next.addWord(word, word_idx, matches);
-		}
-		else
-		{
-			for(int idx = 1; idx < prefix.length(); ++idx, ++word_idx)
-			{
-				if(word_idx == word.length())
-				{
-					String suffix = prefix.substring(idx);
-					prefix = prefix.substring(0, idx);
-					child = new RadixTree(child, suffix, this.terminal, this.matches);
-					terminal = true;
-				}
-				c = Character.toLowerCase(word.charAt(word_idx));
-				pc = Character.toLowerCase(prefix.charAt(idx));
-
-				if(c != pc)
-				{
-					String suffix = prefix.substring(idx);
-					prefix = prefix.substring(0, idx);//todo choose ranking
-					child = new RadixTree(child, suffix, this.terminal, this.matches);
-					child.next = new RadixTree(word.substring(word_idx), matches);
-					terminal = false;
-				}
-			}
-			if(word_idx == word.length())
-				this.terminal = true;
-		}
-	}
-	*/
-	
 	public String toString(){
 		
 		if(this.child == null && this.next == null)
@@ -257,13 +231,22 @@ public class RadixTree implements java.io.Serializable {
 	
 	public static void main(String[] args) throws FileNotFoundException, IOException
 	{
-		RadixTree radix = makeFromFile("src/test_file_3.txt");
+		/*Indexing indexing = new Indexing();
+		HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file_3.txt");
+		RadixTree radix = makeFromIndexing(matches);
+		RadixTree radix_reverse = makeFromIndexingReverse(matches);
 		System.out.println(radix);
 		RadixTree.writeInFile("radix.ser", radix);
-		RadixTree radix_cpy = RadixTree.loadFromFile("radix.ser");
-		System.out.println(radix_cpy);
+		RadixTree.writeInFile("radix_reverse.ser", radix_reverse);*/
+		RadixTree radix = RadixTree.loadFromFile("radix.ser");
+		RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");
 		System.out.println(radix.patternIndexList("sargopette", 0));
-		System.out.println(radix.patternIndexList("mauvaistest", 0));
-		System.out.println(radix.patternIndexList("bobo", 0));
+		System.out.println(radix.patternIndexList("sargop", 0));
+		String word = "rgopette";
+		ArrayList<Indexing.Match> matches = radix_reverse.patternIndexList(reverse(word), 0);
+		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+		for(Indexing.Match m : matches)
+			result.add(indexing.new Match(m.line, m.index - word.length()));
+		System.out.println(result);
 	}
 }

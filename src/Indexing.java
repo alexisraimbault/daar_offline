@@ -73,6 +73,7 @@ public class Indexing implements Serializable{
 		}
 		return result;
 	}
+	
 	public static void main(String[] args) throws FileNotFoundException, IOException
 	{
 		Indexing tmp = new Indexing();
