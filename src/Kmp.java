@@ -106,16 +106,32 @@ public class Kmp {
 		return -1;
 	}
 	
-	public static ArrayList<Integer> patternIndexList(char[] factor, int[] retenue, char[] text)
+	public static ArrayList<Indexing.Match> makeMatches(String path, String motif) throws FileNotFoundException, IOException
 	{
-		ArrayList<Integer> res = new ArrayList<Integer>();
+		char[] factor = motif.toCharArray();
+		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+		try (BufferedReader br = new BufferedReader(new FileReader(path)))
+		{
+			int line_idx = 0;
+		    for(String line; (line = br.readLine()) != null; ++line_idx) 
+		    {
+		    	result.addAll(patternIndexList(factor, retenue(factor), line.toCharArray(), line_idx));
+		    }
+		}
+		return result;
+	}
+	
+	public static ArrayList<Indexing.Match> patternIndexList(char[] factor, int[] retenue, char[] text, int line)
+	{
+		Indexing indexing = new Indexing();
+		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
 		int i = 0;
 		int j = 0;
 		while (i < text.length)
 		{
 			if(j == factor.length)
 			{
-				res.add( i - factor.length);
+				result.add(indexing.new Match(line, i - factor.length));
 				++i;
 				j = 0;
 			}
@@ -140,8 +156,8 @@ public class Kmp {
 			}
 		}
 		if(j == factor.length)
-			res.add( i - factor.length);
-		return res;
+			result.add(indexing.new Match(line, i - factor.length));
+		return result;
 	}
 	
 	public static char[] fileToCharArray(String path) throws FileNotFoundException, IOException
@@ -152,17 +168,18 @@ public class Kmp {
 		    	s+= line;
 		    }
 		}
-		return s.toCharArray();
+		char[] tmpArray = s.toCharArray();
+		return Arrays.copyOfRange(tmpArray, 3, tmpArray.length);
 	}
 	
-	public static ArrayList<Integer> searchFile(String path ,char[] factor) throws FileNotFoundException, IOException
+	public static ArrayList<Indexing.Match> searchFile(String path ,char[] factor) throws FileNotFoundException, IOException
 	{
-		return patternIndexList(factor, retenue(factor), fileToCharArray(path));
+		return patternIndexList(factor, retenue(factor), fileToCharArray(path), 0);
 	}
 	
 	//MAIN
 	  public static void main(String arg[]) throws FileNotFoundException, IOException {
-		  char[] factor = "Sargon".toCharArray();
-		  System.out.println(searchFile("src/test_file.txt", factor));
+		  char[] factor = "sa".toCharArray();
+		  System.out.println(searchFile("src/test_file_2.txt", factor));
 	  }
 }

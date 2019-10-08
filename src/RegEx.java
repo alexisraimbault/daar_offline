@@ -1,6 +1,12 @@
 import java.util.Scanner;
+
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.Exception;
 
 public class RegEx {
@@ -45,7 +51,7 @@ public class RegEx {
         Automaton a = ret.toAutomaton();
         System.out.println("  >> Epsilon Automaton result: \n"+a.toString()+".");
         System.out.println("  >> Determinist Automaton result: \n"+a.toDFA().toString()+".");
-        System.out.println("  >> Pattern match result: \n"+a.toDFA().patternIndexList("bonjour".toCharArray())+".");
+        System.out.println("  >> Pattern match result: \n"+a.toDFA().patternIndexList("bonjour".toCharArray(), 0));
       } catch (Exception e) {
         //System.err.println("  >> ERROR: syntax error for regEx \""+regEx+"\".");
     	  e.printStackTrace();
@@ -56,6 +62,33 @@ public class RegEx {
     System.out.println("  >> Parsing completed.");
     System.out.println("Goodbye Mr. Anderson.");
   }
+  
+  //SEARCH
+  public ArrayList<Indexing.Match> search(String motif, String path) throws Exception
+  {
+	  if(!motif.contains(".") && !motif.contains("*") && !motif.contains("|"))//que lettres, - et '
+	  {
+		  if(!motif.contains(" ") && !motif.contains("'"))
+		  {
+			  //return radixSearch TODO
+			  return null;
+		  }
+		  else
+		  {
+			  return Kmp.makeMatches(path, motif);
+		  }
+	  }
+	  else
+	  {
+		  RegExTree ret = parse();
+		  Automaton a = ret.toAutomaton();
+		  return a.toDFA().makeMatches(path);
+	  }
+		
+  }
+  
+  
+  
 
   //FROM REGEX TO SYNTAX TREE
   private static RegExTree parse() throws Exception {
@@ -474,7 +507,7 @@ class Automaton
 	
 	public boolean stateExists(ArrayList<int[]> states, int[] possible_state)
 	{
-		ArrayList<Integer> possible_state_list = new ArrayList();
+		ArrayList<Integer> possible_state_list = new ArrayList<Integer>();
 		for(int i : possible_state)
 			possible_state_list.add(i);
 		for(int[] state : states)
@@ -496,7 +529,7 @@ class Automaton
 	}
 	public int stateIndexIfExists(ArrayList<int[]> states, int[] possible_state)
 	{
-		ArrayList<Integer> possible_state_list = new ArrayList();
+		ArrayList<Integer> possible_state_list = new ArrayList<Integer>();
 		for(int i : possible_state)
 			possible_state_list.add(i);
 		int cpt = 0;
@@ -599,9 +632,10 @@ class Automaton
 		return res;
 	}
 	
-	public ArrayList<Integer> patternIndexList(char[] text)
+	public ArrayList<Indexing.Match> patternIndexList(char[] text, int line)
 	{
-		ArrayList<Integer> res = new ArrayList<Integer>();
+		Indexing indexing = new Indexing();
+		ArrayList<Indexing.Match> res = new ArrayList<Indexing.Match>();
 		int init = 0;
 		while(!this.init[init])
 			init++;
@@ -616,12 +650,26 @@ class Automaton
 				j++;
 				if(this.accept[state])
 				{
-					res.add(i);
+					res.add(indexing.new Match(line, i));
 					break;
 				}
 			}
 		}
 		return res;
+	}
+	
+	public ArrayList<Indexing.Match> makeMatches(String path) throws FileNotFoundException, IOException
+	{
+		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+		try (BufferedReader br = new BufferedReader(new FileReader(path)))
+		{
+			int line_idx = 0;
+		    for(String line; (line = br.readLine()) != null; ++line_idx) 
+		    {
+		    	result.addAll(patternIndexList(line.toCharArray(), line_idx));
+		    }
+		}
+		return result;
 	}
 	
 	public String toString()
