@@ -49,10 +49,10 @@ public class RadixTree implements java.io.Serializable {
 		RadixTree result = null;
 		for(Entry<String, ArrayList<Indexing.Match>> pair : matches.entrySet())
 		{
-			String key = reverse(pair.getKey());
+			String key = reverse_rmlast(pair.getKey());
 			ArrayList<Indexing.Match> value = new ArrayList<Indexing.Match>();
 			for(Indexing.Match m : pair.getValue())
-				value.add(indexing.new Match(m.line, m.index + key.length()));
+				value.add(indexing.new Match(m.line, m.index + key.length() + 1));
 			if(result == null)
 				result = new RadixTree(key, value);
 			else
@@ -61,6 +61,13 @@ public class RadixTree implements java.io.Serializable {
 		return result;
 	}
 	
+	public static String reverse_rmlast(String word)
+	{
+		StringBuilder sb = new StringBuilder(); 
+		sb.append(word);
+		String full_reverse = sb.reverse().toString();
+		return full_reverse.substring(0, full_reverse.length() - 1);
+	}
 	public static String reverse(String word)
 	{
 		StringBuilder sb = new StringBuilder(); 
@@ -231,22 +238,28 @@ public class RadixTree implements java.io.Serializable {
 	
 	public static void main(String[] args) throws FileNotFoundException, IOException
 	{
-		/*Indexing indexing = new Indexing();
-		HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file_3.txt");
-		RadixTree radix = makeFromIndexing(matches);
-		RadixTree radix_reverse = makeFromIndexingReverse(matches);
-		System.out.println(radix);
-		RadixTree.writeInFile("radix.ser", radix);
-		RadixTree.writeInFile("radix_reverse.ser", radix_reverse);*/
-		RadixTree radix = RadixTree.loadFromFile("radix.ser");
-		RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");
-		System.out.println(radix.patternIndexList("sargopette", 0));
-		System.out.println(radix.patternIndexList("sargop", 0));
-		String word = "rgopette";
-		ArrayList<Indexing.Match> matches = radix_reverse.patternIndexList(reverse(word), 0);
-		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
-		for(Indexing.Match m : matches)
-			result.add(indexing.new Match(m.line, m.index - word.length()));
-		System.out.println(result);
+		
+		{
+			Indexing indexing = new Indexing();
+			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file_3.txt");
+			RadixTree radix = makeFromIndexing(matches);
+			RadixTree radix_reverse = makeFromIndexingReverse(matches);
+			System.out.println(radix);
+			RadixTree.writeInFile("radix.ser", radix);
+			RadixTree.writeInFile("radix_reverse.ser", radix_reverse);
+		}
+		{
+			RadixTree radix = RadixTree.loadFromFile("radix.ser");
+			RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");
+			System.out.println(radix.patternIndexList("sargopette", 0));
+			System.out.println(radix.patternIndexList("sargop", 0));
+			String word = "rgopette";
+			ArrayList<Indexing.Match> matches = radix_reverse.patternIndexList(reverse(word), 0);
+			ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+			for(Indexing.Match m : matches)
+				result.add(indexing.new Match(m.line, m.index - word.length()));
+			System.out.println(result);
+		}
+		
 	}
 }
