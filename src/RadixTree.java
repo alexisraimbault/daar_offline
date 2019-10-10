@@ -97,6 +97,7 @@ public class RadixTree implements java.io.Serializable {
 					this.child = tmpChild;
 					this.prefix = this.prefix.substring(0, word.length());
 					this.terminal = true;
+					this.matches = matches;
 				}
 				else{
 					int cpt_identiques = 0;
@@ -155,12 +156,18 @@ public class RadixTree implements java.io.Serializable {
 				if(word_idx == word.length())// found word
 					if (terminal)
 					{
+						//System.out.println(prefix);//debug
 						return matches;
 					}
 					else
 						return new ArrayList<Indexing.Match>();
 				else//child
-					return child.patternIndexList(word, word_idx);
+				{
+					if(child != null)
+						return child.patternIndexList(word, word_idx);
+					else
+						return new ArrayList<Indexing.Match>();
+				}	
 			}
 			else//not all prefix letters in common -> word not in tree
 			{
@@ -241,17 +248,20 @@ public class RadixTree implements java.io.Serializable {
 		
 		{
 			Indexing indexing = new Indexing();
-			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file_3.txt");
+			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file.txt");
+			System.out.println(matches.get("sargon"));
 			RadixTree radix = makeFromIndexing(matches);
+			System.out.println(radix.patternIndexList("sargon", 0));
 			RadixTree radix_reverse = makeFromIndexingReverse(matches);
+			System.out.println(radix_reverse.patternIndexList("nogras", 0));
 			System.out.println(radix);
 			RadixTree.writeInFile("radix.ser", radix);
 			RadixTree.writeInFile("radix_reverse.ser", radix_reverse);
 		}
-		{
+		/*{
 			RadixTree radix = RadixTree.loadFromFile("radix.ser");
 			RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");
-			System.out.println(radix.patternIndexList("sargopette", 0));
+			System.out.println(radix.patternIndexList("sargon", 0));
 			System.out.println(radix.patternIndexList("sargop", 0));
 			String word = "rgopette";
 			ArrayList<Indexing.Match> matches = radix_reverse.patternIndexList(reverse(word), 0);
@@ -259,7 +269,7 @@ public class RadixTree implements java.io.Serializable {
 			for(Indexing.Match m : matches)
 				result.add(indexing.new Match(m.line, m.index - word.length()));
 			System.out.println(result);
-		}
+		}*/
 		
 	}
 }

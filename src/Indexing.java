@@ -40,7 +40,7 @@ public class Indexing implements Serializable{
 		    		char c = line.charAt(idx);
 		    		if(c >= 'A' && c <= 'Z')
 		    			c = Character.toLowerCase(c);
-		    		if(!((c >= 'a' && c <= 'z') || c == '-' || c == '\''))
+		    		if(!((c >= 'a' && c <= 'z')))
 		    		{
 		    			
 		    			if(begin_word != idx)
@@ -70,6 +70,7 @@ public class Indexing implements Serializable{
     				}
     			}
 		    }
+		    br.close();
 		}
 		return result;
 	}
@@ -77,7 +78,7 @@ public class Indexing implements Serializable{
 	public static void main(String[] args) throws FileNotFoundException, IOException
 	{
 		Indexing tmp = new Indexing();
-		System.out.println(tmp.makeMatches("src/test_file_3.txt"));
+		System.out.println(tmp.makeMatches("src/test_file.txt"));
 	}
 	
 }

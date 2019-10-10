@@ -14,6 +14,9 @@ public class RegEx {
   static final int ETOILE = 0xE7011E;
   static final int ALTERN = 0xA17E54;
   static final int PROTECTION = 0xBADDAD;
+  
+  public static final String ANSI_RED_BACKGROUND = "\u001B[41m";
+  public static final String ANSI_RESET = "\u001B[0m";
 
   static final int PARENTHESEOUVRANT = 0x16641664;
   static final int PARENTHESEFERMANT = 0x51515151;
@@ -41,16 +44,17 @@ public class RegEx {
     if (regEx.length()<1) {
       System.err.println("  >> ERROR: empty regEx.");
     } else {
-      System.out.print("  >> ASCII codes: ["+(int)regEx.charAt(0));
+      /*System.out.print("  >> ASCII codes: ["+(int)regEx.charAt(0));
       for (int i=1;i<regEx.length();i++) System.out.print(","+(int)regEx.charAt(i));
-      System.out.println("].");
+      System.out.println("].");*/
       try {
-        RegExTree ret = parse();
+       /* RegExTree ret = parse();
         System.out.println("  >> Tree result: "+ret.toString()+".");
         Automaton a = ret.toAutomaton();
         System.out.println("  >> Epsilon Automaton result: \n"+a.toString()+".");
         System.out.println("  >> Determinist Automaton result: \n"+a.toDFA().toString()+".");
-        System.out.println("  >> Pattern match result: \n"+a.toDFA().patternIndexList("bonjour".toCharArray(), 0));
+        System.out.println("  >> Pattern match result: \n"+a.toDFA().patternIndexList("bonjour".toCharArray(), 0));*/
+    	printResult(search(regEx, "src/test_file.txt"),"src/test_file.txt", regEx);
       } catch (Exception e) {
         //System.err.println("  >> ERROR: syntax error for regEx \""+regEx+"\".");
     	  e.printStackTrace();
@@ -63,12 +67,13 @@ public class RegEx {
   }
   
   //SEARCH
-  public ArrayList<Indexing.Match> search(String motif, String path) throws Exception
+  public static ArrayList<Indexing.Match> search(String motif, String path) throws Exception
   {
 	  if(!motif.contains(".") && !motif.contains("*") && !motif.contains("|"))//que lettres, - et '
 	  {
-		  if(!motif.contains(" "))
+		  if(!motif.contains(" ") && !motif.contains("-") && !motif.contains("\'"))
 		  {
+			  System.out.println("using radix...");
 			  RadixTree radix = RadixTree.loadFromFile("radix.ser");// en partant du principe que le cache du fichier à lire existe
 			  ArrayList<Indexing.Match> result = radix.patternIndexList(motif, 0);
 			  RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");// en partant du principe que le cache du fichier à lire existe
@@ -80,16 +85,43 @@ public class RegEx {
 		  }
 		  else
 		  {
+			  System.out.println("using KMP...");
 			  return Kmp.makeMatches(path, motif);
 		  }
 	  }
 	  else
 	  {
+		  System.out.println("using automaton...");
 		  RegExTree ret = parse();
 		  Automaton a = ret.toAutomaton();
+		  System.out.println("Determinist Automaton result: \n"+a.toDFA().toString()+".");
 		  return a.toDFA().makeMatches(path);
 	  }
 		
+  }
+  
+  //print
+  public static void printResult(ArrayList<Indexing.Match> matches, String path, String word) throws FileNotFoundException, IOException
+  {
+	  matches.sort((Indexing.Match o1, Indexing.Match o2)-> o1.line!=o2.line ? o1.line-o2.line : o2.index-o1.index);
+	  System.out.println("printing the " + matches.size() + " matches...");
+	  try (BufferedReader br = new BufferedReader(new FileReader(path)))
+		{
+			int line_idx = 0;
+		    for(String line; (line = br.readLine()) != null; ++line_idx) 
+		    {
+		    	boolean toPrint = !matches.isEmpty() && line_idx == matches.get(0).line;
+		    	while(!matches.isEmpty() && line_idx == matches.get(0).line){
+		    		String tmpLineBefore = line.substring(0, matches.get(0).index);
+		    		String tmpLineAfter = line.substring(matches.get(0).index);
+		    		line = tmpLineBefore + "@" + tmpLineAfter;
+		    		matches.remove(0);
+		    	}
+		    	if(toPrint)
+		    		System.out.println(line);
+		    }
+		    br.close();
+		}
   }
   
   
@@ -648,11 +680,13 @@ class Automaton
 		for(int i = 0; i < text.length; i++)
 		{
 			state = init;
+			
 			int j = i;
-			while(this.trans[state][(int)text[j]] != -1)
+			while( j<text.length && text[j] < 256 && this.trans[state][(int)text[j]] != -1 )
 			{
 				state = this.trans[state][(int)text[j]];
 				j++;
+				
 				if(this.accept[state])
 				{
 					res.add(indexing.new Match(line, i));
@@ -673,7 +707,9 @@ class Automaton
 		    {
 		    	result.addAll(patternIndexList(line.toCharArray(), line_idx));
 		    }
+		    br.close();
 		}
+		
 		return result;
 	}
 	
