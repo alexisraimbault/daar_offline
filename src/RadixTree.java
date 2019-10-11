@@ -232,6 +232,37 @@ public class RadixTree implements java.io.Serializable {
 	    }
 	}
 	
+	public static HashMap<String, ArrayList<Indexing.Match>> loadIndexingFromFile(String path) throws FileNotFoundException, IOException
+	{
+		HashMap<String, ArrayList<Indexing.Match>> result = new HashMap<String, ArrayList<Indexing.Match>>();
+		Indexing indexing = new Indexing();
+		try (BufferedReader br = new BufferedReader(new FileReader(path)))
+		{
+		    for(String line; (line = br.readLine()) != null;) 
+		    {
+		    	String[] index = line.split(" ");
+		    	ArrayList<Indexing.Match> matches = new ArrayList<Indexing.Match>();
+		    	for(int i = 1; i < index.length; i += 2)
+		    		matches.add(indexing.new Match(Integer.parseInt(index[i]), Integer.parseInt(index[i+1])));
+		    	result.put(index[0], matches);
+		    }
+		}
+		return result;
+	}
+	
+	public static void writeIndexingInFile(String path, HashMap<String, ArrayList<Indexing.Match>> indexing) throws IOException
+	{
+		BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+		for(Entry<String, ArrayList<Indexing.Match>> pair : indexing.entrySet())
+		{
+			writer.write(pair.getKey() + ' ');
+			for(Indexing.Match match : pair.getValue())
+				writer.write(match.line + " " + match.index + ' ');
+			writer.write('\n');
+		}
+	    writer.close();
+	}
+	
 	public String readMatches( String line )
 	{
 		Indexing indexing = new Indexing();
@@ -406,15 +437,19 @@ public class RadixTree implements java.io.Serializable {
 		
 		{
 			Indexing indexing = new Indexing();
-			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file_2.txt");
+			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file.txt");
 			//System.out.println(matches.get("sargon"));
 			RadixTree radix = makeFromIndexing(matches);
 			//RadixTree radix_reverse = makeFromIndexingReverse(matches);
 			System.out.println(radix);
 			//System.out.println(radix_reverse);
-			RadixTree.writeManually("radix.txt", radix);
-			RadixTree radixRed = readManually("radix.txt");
-			System.out.println(radixRed);
+			//RadixTree.writeManually("indexing.txt.txt", radix);
+			//RadixTree radixRed = readManually("radix.txt");
+			//System.out.println(radixRed);
+			//RadixTree.writeIndexingInFile("indexing.txt", matches);
+			HashMap<String, ArrayList<Indexing.Match>> redMatches = RadixTree.loadIndexingFromFile("indexing.txt");
+			RadixTree redRadix = makeFromIndexing(redMatches);
+			System.out.println(redRadix);
 		}
 		/*{
 			RadixTree radix = RadixTree.loadFromFile("radix.ser");
