@@ -1,6 +1,10 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -30,6 +34,10 @@ public class RadixTree implements java.io.Serializable {
 		this.matches = matches;
 	}
 	
+	public RadixTree() {
+		// TODO Auto-generated constructor stub
+	}
+
 	public static RadixTree makeFromIndexing(HashMap<String, ArrayList<Indexing.Match>> matches) throws FileNotFoundException, IOException
 	{
 		
@@ -224,20 +232,170 @@ public class RadixTree implements java.io.Serializable {
 	    }
 	}
 	
+	public String readMatches( String line )
+	{
+		Indexing indexing = new Indexing();
+		ArrayList<Indexing.Match> tmpMatches = new ArrayList<Indexing.Match>();
+		int idx = 0;
+		String tmpLine, tmpChar;
+		boolean readingLine, readingChar, justRedLine;
+		tmpLine = "";
+		tmpChar = "";
+		justRedLine = false;
+		readingLine = false;
+		readingChar = false;
+		if(line.charAt(idx) != '[')
+		{
+			System.out.println("can't read matches here !");
+			return null;
+		}
+		while(line.charAt(idx) != ']')
+		{
+			if(!readingLine && !readingChar && !justRedLine)
+			{
+				if(line.charAt(idx) >= '0' && line.charAt(idx) <= '9')
+				{
+					readingLine = true;
+					tmpLine += line.charAt(idx);
+				}
+			}else
+			{
+				if(readingLine)
+				{
+					if(line.charAt(idx) >= '0' && line.charAt(idx) <= '9')
+						tmpLine += line.charAt(idx);
+					else
+					{
+						readingLine = false;
+						justRedLine = true;
+					}
+				}else
+				{
+					if(justRedLine)
+					{
+						if(line.charAt(idx) >= '0' && line.charAt(idx) <= '9')
+						{
+							justRedLine = false;
+							readingChar = true;
+							tmpChar += line.charAt(idx);
+						}
+					}else{
+						if(readingChar)
+						{
+							if(line.charAt(idx) >= '0' && line.charAt(idx) <= '9')
+								tmpChar += line.charAt(idx);
+							else
+							{
+								readingChar = false;
+								tmpMatches.add(indexing.new Match(Integer.parseInt(tmpLine), Integer.parseInt(tmpChar)));
+								tmpLine = "";
+								tmpChar = "";
+							}
+						}
+					}
+				}
+			}
+			idx++;
+		}
+		this.matches = tmpMatches;
+		return line.substring(idx + 1);
+	}
+	
+	public String readPrefix( String line )
+	{
+		int idx = 0;
+		String tmpPrefix;
+		tmpPrefix = "";
+		while(line.charAt(idx) != '[')
+		{
+			char c = Character.toLowerCase(line.charAt(idx));
+			if(c >= 'a' && c <= 'z')
+				tmpPrefix += c;
+			idx++;
+		}
+		this.prefix = tmpPrefix;
+		return line.substring(idx);
+	}
+	
+	public String readTree(String line, boolean isChild)
+	{
+		String tmpLine = this.readPrefix(line);
+		tmpLine = this.readMatches(tmpLine);
+		if(isChild)
+		{
+			while(tmpLine.length() > 0 && !(tmpLine.charAt(0) == ')'))
+			{
+				if(tmpLine.charAt(0) == '(')
+				{
+					this.child = new RadixTree();
+					tmpLine = this.child.readTree(tmpLine, true);
+				}else
+				{
+					if(tmpLine.charAt(0) == ',')
+					{
+						this.next = new RadixTree();
+						tmpLine = this.next.readTree(tmpLine, false);
+					}
+				}
+			}
+			if(tmpLine.length() != 0 && tmpLine.charAt(0) == ')')
+				return tmpLine.substring(1);
+			else
+				return tmpLine;
+		}else
+		{
+			while(tmpLine.length() > 0 && !(tmpLine.charAt(0) == ')'))
+			{
+				if(tmpLine.charAt(0) == '(')
+				{
+					this.child = new RadixTree();
+					tmpLine = this.child.readTree(tmpLine, true);
+				}else
+				{
+					if(tmpLine.charAt(0) == ',')
+					{
+						this.next = new RadixTree();
+						tmpLine = this.next.readTree(tmpLine, false);
+					}
+				}
+			}
+			
+			return tmpLine;
+		}
+		
+	}
+	
+	public static RadixTree readManually(String path) throws IOException
+	{
+		BufferedReader br = new BufferedReader(new FileReader(path));
+		String line = br.readLine();
+		br.close();
+		RadixTree tree = new RadixTree();
+		tree.readTree(line, false);
+		return tree;
+	}
+	
+	public static void writeManually(String path, RadixTree tree) throws IOException
+	{
+		BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+	    writer.write(tree.toString());
+	    writer.close();
+	}
+	
 	public String toString(){
 		
 		if(this.child == null && this.next == null)
-			return this.prefix;
+			return this.prefix + this.matches ;
 		else
 		{
 			if(this.next == null)
-				return this.prefix + " (" + this.child.toString() + ") ";
+				return this.prefix +  this.matches + "(" + this.child.toString() + ")";
 			else
 			{
 				if(this.child == null)
-					return this.prefix + ", " + this.next.toString();
+					return this.prefix +  this.matches  + "," + this.next.toString();
 				else
-					return this.prefix + " (" + this.child.toString() + ") " + ", " + this.next.toString();
+					return this.prefix  + this.matches + "(" + this.child.toString() + ")" + "," + this.next.toString();
 			}
 		}
 		
@@ -248,15 +406,15 @@ public class RadixTree implements java.io.Serializable {
 		
 		{
 			Indexing indexing = new Indexing();
-			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file.txt");
-			System.out.println(matches.get("sargon"));
+			HashMap<String, ArrayList<Indexing.Match>> matches = indexing.makeMatches("src/test_file_2.txt");
+			//System.out.println(matches.get("sargon"));
 			RadixTree radix = makeFromIndexing(matches);
-			System.out.println(radix.patternIndexList("sargon", 0));
-			RadixTree radix_reverse = makeFromIndexingReverse(matches);
-			System.out.println(radix_reverse.patternIndexList("nogras", 0));
+			//RadixTree radix_reverse = makeFromIndexingReverse(matches);
 			System.out.println(radix);
-			RadixTree.writeInFile("radix.ser", radix);
-			RadixTree.writeInFile("radix_reverse.ser", radix_reverse);
+			//System.out.println(radix_reverse);
+			RadixTree.writeManually("radix.txt", radix);
+			RadixTree radixRed = readManually("radix.txt");
+			System.out.println(radixRed);
 		}
 		/*{
 			RadixTree radix = RadixTree.loadFromFile("radix.ser");
