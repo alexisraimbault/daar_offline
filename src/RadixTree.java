@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
+import java.util.Scanner;
 
 public class RadixTree implements java.io.Serializable {
 	
@@ -236,17 +238,18 @@ public class RadixTree implements java.io.Serializable {
 	{
 		HashMap<String, ArrayList<Indexing.Match>> result = new HashMap<String, ArrayList<Indexing.Match>>();
 		Indexing indexing = new Indexing();
-		try (BufferedReader br = new BufferedReader(new FileReader(path)))
-		{
-		    for(String line; (line = br.readLine()) != null;) 
-		    {
-		    	String[] index = line.split(" ");
-		    	ArrayList<Indexing.Match> matches = new ArrayList<Indexing.Match>();
-		    	for(int i = 1; i < index.length; i += 2)
-		    		matches.add(indexing.new Match(Integer.parseInt(index[i]), Integer.parseInt(index[i+1])));
-		    	result.put(index[0], matches);
-		    }
-		}
+		File f = new File(path);
+	    FileInputStream inputStream = new FileInputStream(f);
+	    Scanner sc = new Scanner(inputStream, "UTF-8");
+	    while (sc.hasNextLine()) 
+	    {
+	       String line = sc.nextLine();
+	       String[] index = line.split(" ");
+	       ArrayList<Indexing.Match> matches = new ArrayList<Indexing.Match>();
+    	   for(int i = 1; i < index.length; i += 2)
+    		   matches.add(indexing.new Match(Integer.parseInt(index[i]), Integer.parseInt(index[i+1])));
+    	   result.put(index[0], matches);
+    	}
 		return result;
 	}
 	
@@ -441,15 +444,18 @@ public class RadixTree implements java.io.Serializable {
 			//System.out.println(matches.get("sargon"));
 			RadixTree radix = makeFromIndexing(matches);
 			//RadixTree radix_reverse = makeFromIndexingReverse(matches);
-			System.out.println(radix);
+			//System.out.println(radix);
 			//System.out.println(radix_reverse);
 			//RadixTree.writeManually("indexing.txt.txt", radix);
+			System.out.println("big file done");
 			//RadixTree radixRed = readManually("radix.txt");
 			//System.out.println(radixRed);
 			//RadixTree.writeIndexingInFile("indexing.txt", matches);
-			HashMap<String, ArrayList<Indexing.Match>> redMatches = RadixTree.loadIndexingFromFile("indexing.txt");
+			
+			HashMap<String, ArrayList<Indexing.Match>> redMatches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");
 			RadixTree redRadix = makeFromIndexing(redMatches);
-			System.out.println(redRadix);
+			System.out.println("radix from indexing done");
+			//System.out.println(redRadix);
 		}
 		/*{
 			RadixTree radix = RadixTree.loadFromFile("radix.ser");

@@ -2,6 +2,7 @@ import java.util.Scanner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -36,7 +37,7 @@ public class RegEx {
     } else {
       Scanner scanner = new Scanner(System.in);
       System.out.print("  >> Please enter a regEx: ");
-      regEx = scanner.next();
+      regEx = scanner.nextLine();
     }
     System.out.println("  >> Parsing regEx \""+regEx+"\".");
     System.out.println("  >> ...");
@@ -71,12 +72,14 @@ public class RegEx {
   {
 	  if(!motif.contains(".") && !motif.contains("*") && !motif.contains("|"))//que lettres, - et '
 	  {
-		  if(!motif.contains(" ") && !motif.contains("-") && !motif.contains("\'"))
+		  System.out.println(motif);
+		  if(motif.matches("[a-zA-Z]+"))
 		  {
 			  System.out.println("using radix...");
-			  RadixTree radix = RadixTree.loadFromFile("radix.ser");// en partant du principe que le cache du fichier à lire existe
+			  HashMap<String, ArrayList<Indexing.Match>> matches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");// en partant du principe que le cache du fichier à lire existe
+			  RadixTree radix = RadixTree.makeFromIndexing(matches);
+			  RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matches);
 			  ArrayList<Indexing.Match> result = radix.patternIndexList(motif, 0);
-			  RadixTree radix_reverse = RadixTree.loadFromFile("radix_reverse.ser");// en partant du principe que le cache du fichier à lire existe
 			  ArrayList<Indexing.Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(motif), 0);
 			  Indexing indexing = new Indexing();
 			  for(Indexing.Match m : result_reverse)
