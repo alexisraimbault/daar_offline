@@ -61,12 +61,15 @@ public class Indexing implements Serializable{
 		    	if(begin_word != line.length())
     			{
     				String word = line.substring(begin_word, line.length());
-    				if(result.containsKey(word))
-    					result.get(word).add(new Match(line_idx, begin_word));
-    				else{
-    					ArrayList<Match> new_match = new ArrayList<Match>();
-    					new_match.add(new Match(line_idx, begin_word));
-    					result.put(word, new_match);
+    				if(word.length() > 2)
+    				{
+    					if(result.containsKey(word))
+	    					result.get(word).add(new Match(line_idx, begin_word));
+	    				else{
+	    					ArrayList<Match> new_match = new ArrayList<Match>();
+	    					new_match.add(new Match(line_idx, begin_word));
+	    					result.put(word, new_match);
+	    				}
     				}
     			}
 		    }
