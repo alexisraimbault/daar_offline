@@ -2,6 +2,7 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.io.BufferedReader;
@@ -32,8 +33,10 @@ public class RegEx
   	public RegEx(){}
 
   	//MAIN
-  	public static void main(String arg[])
+  	public static void main(String arg[]) throws Exception
   	{
+  		//runTests();
+  		runTests_radix_reading_file();
   		System.out.println("Welcome to Bogota, Mr. Thomas Anderson.");
     	if (arg.length!=0)
     	{
@@ -113,6 +116,50 @@ public class RegEx
   	
   	
     //TESTS
+    public static void runTests_radix_reading_file() throws Exception
+  	{
+    	HashMap<Integer, ArrayList<Long>> radix_motif_perf = new HashMap<Integer, ArrayList<Long>>();
+  		HashMap<Integer, Double> radix_motif_perf_avg = new HashMap<Integer, Double>();
+  		HashMap<String, ArrayList<Match>> matches = RadixTree.loadIndexingFromFile("indexing.txt");// en partant du principe que le cache du fichier à lire existe
+  		Thread.sleep(4000);
+  		for(Entry<String, ArrayList<Match>> pair : matches.entrySet())
+  		{
+  			if(!radix_motif_perf.containsKey(pair.getKey().length()) || radix_motif_perf.get(pair.getKey().length()).size()<10)
+  			{
+  				
+  				long startTime = System.currentTimeMillis();
+  	  			HashMap<String, ArrayList<Match>> matchesRed = RadixTree.loadIndexingFromFile("indexing.txt");// en partant du principe que le cache du fichier à lire existe
+  	  			RadixTree radix = RadixTree.makeFromIndexing(matchesRed);
+  	  			RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matchesRed);
+  	  			
+  	  			List<Match> result = radix.patternIndexList(pair.getKey(), 0);
+  	  			List<Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(pair.getKey()), 0);
+  	  			
+  	  			for(Match m : result_reverse)
+  	  				result.add(new Match(m.line, m.index - pair.getKey().length()));
+  	  			
+  	  			long stopTime = System.currentTimeMillis();
+  	  			long duration = stopTime - startTime;
+  	  			
+  	  			if(radix_motif_perf.containsKey(pair.getKey().length()))
+  	  				radix_motif_perf.get(pair.getKey().length()).add(duration);
+  	  			else
+  	  			{
+  	  				ArrayList<Long> tmp = new ArrayList<Long>();
+  	  				tmp.add(duration);
+  	  				radix_motif_perf.put(pair.getKey().length(), tmp);
+  	  			}
+  			}
+  		}
+  		for(Entry<Integer, ArrayList<Long>> pair : radix_motif_perf.entrySet())
+  		{
+  			Collections.sort(pair.getValue());
+  			for(Long n : pair.getValue())
+  				System.out.print(n + " ");
+  			System.out.print('\n');
+  		}
+  	}
+  	
     public static void runTests() throws Exception
   	{
   	  	
@@ -125,9 +172,8 @@ public class RegEx
   		{
   			long startTime = System.currentTimeMillis();
   			
-  			HashMap<String, ArrayList<Match>> matchesRed = RadixTree.loadIndexingFromFile("indexing.txt");// en partant du principe que le cache du fichier à lire existe
-  			RadixTree radix = RadixTree.makeFromIndexing(matchesRed);
-  			RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matchesRed);
+  			RadixTree radix = RadixTree.makeFromIndexing(matches);
+  			RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matches);
   			
   			List<Match> result = radix.patternIndexList(pair.getKey(), 0);
   			List<Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(pair.getKey()), 0);
