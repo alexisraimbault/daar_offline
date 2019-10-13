@@ -1,5 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -529,22 +531,32 @@ public class RadixTree implements java.io.Serializable {
 	{
 		
 		{
+			
+			
 			Indexing indexing = new Indexing();
 			HashMap<String, ArrayList<Match>> matches = indexing.makeMatches("src/test_file.txt");
-			//System.out.println(matches.get("sargon"));
 			RadixTree radix = makeFromIndexing(matches);
+			
+			DataOutputStream dos = new DataOutputStream(new FileOutputStream ("radix_binary.txt"));
+			BinaryIO.writeRadixTree(dos, radix);
+			
+			DataInputStream dis = new DataInputStream(new FileInputStream ("radix_binary.txt"));
+			RadixTree radixRed = BinaryIO.readRadixTree(dis);
+			
+			System.out.println(radix);
+			System.out.println(radixRed);
 			//RadixTree radix_reverse = makeFromIndexingReverse(matches);
 			//System.out.println(radix);
 			//System.out.println(radix_reverse);
 			//RadixTree.writeManually("indexing.txt.txt", radix);
-			System.out.println("big file done");
+			//System.out.println("big file done");
 			//RadixTree radixRed = readManually("radix.txt");
 			//System.out.println(radixRed);
 			//RadixTree.writeIndexingInFile("indexing.txt", matches);
 			
-			HashMap<String, ArrayList<Match>> redMatches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");
-			RadixTree redRadix = makeFromIndexing(redMatches);
-			System.out.println("radix from indexing done");
+			//HashMap<String, ArrayList<Match>> redMatches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");
+			//RadixTree redRadix = makeFromIndexing(redMatches);
+			//System.out.println("radix from indexing done");
 			//System.out.println(redRadix);
 		}
 		/*{
