@@ -106,10 +106,10 @@ public class Kmp {
 		return -1;
 	}
 	
-	public static ArrayList<Indexing.Match> makeMatches(String path, String motif) throws FileNotFoundException, IOException
+	public static ArrayList<Match> makeMatches(String path, String motif) throws FileNotFoundException, IOException
 	{
 		char[] factor = motif.toCharArray();
-		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+		ArrayList<Match> result = new ArrayList<Match>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path)))
 		{
 			int line_idx = 0;
@@ -121,17 +121,16 @@ public class Kmp {
 		return result;
 	}
 	
-	public static ArrayList<Indexing.Match> patternIndexList(char[] factor, int[] retenue, char[] text, int line)
+	public static ArrayList<Match> patternIndexList(char[] factor, int[] retenue, char[] text, int line)
 	{
-		Indexing indexing = new Indexing();
-		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+		ArrayList<Match> result = new ArrayList<Match>();
 		int i = 0;
 		int j = 0;
 		while (i < text.length)
 		{
 			if(j == factor.length)
 			{
-				result.add(indexing.new Match(line, i - factor.length));
+				result.add(new Match(line, i - factor.length));
 				++i;
 				j = 0;
 			}
@@ -156,7 +155,7 @@ public class Kmp {
 			}
 		}
 		if(j == factor.length)
-			result.add(indexing.new Match(line, i - factor.length));
+			result.add(new Match(line, i - factor.length));
 		return result;
 	}
 	
@@ -172,7 +171,7 @@ public class Kmp {
 		return Arrays.copyOfRange(tmpArray, 3, tmpArray.length);
 	}
 	
-	public static ArrayList<Indexing.Match> searchFile(String path ,char[] factor) throws FileNotFoundException, IOException
+	public static ArrayList<Match> searchFile(String path ,char[] factor) throws FileNotFoundException, IOException
 	{
 		return patternIndexList(factor, retenue(factor), fileToCharArray(path), 0);
 	}

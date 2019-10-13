@@ -7,24 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class Indexing implements Serializable{
-	
-	public class Match implements Serializable
-	{
-		public Match(int line, int index) {
-			super();
-			this.line = line;
-			this.index = index;
-		}
-		
-		public int line;
-		public int index;
-		
-		public String toString()
-		{
-			return "(" + line + " , " + index + ")"; 
-		}
-	}
-	
 	public HashMap<String, ArrayList<Match>> makeMatches(String path) throws FileNotFoundException, IOException
 	{
 		HashMap<String, ArrayList<Match>> result = new HashMap<String, ArrayList<Match>>();

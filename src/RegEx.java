@@ -3,6 +3,7 @@ import java.util.Scanner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -68,7 +69,7 @@ public class RegEx {
   }
   
   //SEARCH
-  public static ArrayList<Indexing.Match> search(String motif, String path) throws Exception
+  public static List<Match> search(String motif, String path) throws Exception
   {
 	  if(!motif.contains(".") && !motif.contains("*") && !motif.contains("|"))//que lettres, - et '
 	  {
@@ -76,14 +77,14 @@ public class RegEx {
 		  if(motif.matches("[a-zA-Z]+"))
 		  {
 			  System.out.println("using radix...");
-			  HashMap<String, ArrayList<Indexing.Match>> matches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");// en partant du principe que le cache du fichier à lire existe
+			  HashMap<String, ArrayList<Match>> matches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");// en partant du principe que le cache du fichier à lire existe
 			  RadixTree radix = RadixTree.makeFromIndexing(matches);
 			  RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matches);
-			  ArrayList<Indexing.Match> result = radix.patternIndexList(motif, 0);
-			  ArrayList<Indexing.Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(motif), 0);
+			  List<Match> result = radix.patternIndexList(motif, 0);
+			  List<Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(motif), 0);
 			  Indexing indexing = new Indexing();
-			  for(Indexing.Match m : result_reverse)
-					result.add(indexing .new Match(m.line, m.index - motif.length()));
+			  for(Match m : result_reverse)
+					result.add(new Match(m.line, m.index - motif.length()));
 			  return result;
 		  }
 		  else
@@ -104,9 +105,9 @@ public class RegEx {
   }
   
   //print
-  public static void printResult(ArrayList<Indexing.Match> matches, String path, String word) throws FileNotFoundException, IOException
+  public static void printResult(List<Match> matches, String path, String word) throws FileNotFoundException, IOException
   {
-	  matches.sort((Indexing.Match o1, Indexing.Match o2)-> o1.line!=o2.line ? o1.line-o2.line : o2.index-o1.index);
+	  matches.sort((Match o1, Match o2)-> o1.line!=o2.line ? o1.line-o2.line : o2.index-o1.index);
 	  System.out.println("printing the " + matches.size() + " matches...");
 	  try (BufferedReader br = new BufferedReader(new FileReader(path)))
 		{
@@ -672,10 +673,9 @@ class Automaton
 		return res;
 	}
 	
-	public ArrayList<Indexing.Match> patternIndexList(char[] text, int line)
+	public ArrayList<Match> patternIndexList(char[] text, int line)
 	{
-		Indexing indexing = new Indexing();
-		ArrayList<Indexing.Match> res = new ArrayList<Indexing.Match>();
+		ArrayList<Match> res = new ArrayList<Match>();
 		int init = 0;
 		while(!this.init[init])
 			init++;
@@ -692,7 +692,7 @@ class Automaton
 				
 				if(this.accept[state])
 				{
-					res.add(indexing.new Match(line, i));
+					res.add(new Match(line, i));
 					break;
 				}
 			}
@@ -700,9 +700,9 @@ class Automaton
 		return res;
 	}
 	
-	public ArrayList<Indexing.Match> makeMatches(String path) throws FileNotFoundException, IOException
+	public ArrayList<Match> makeMatches(String path) throws FileNotFoundException, IOException
 	{
-		ArrayList<Indexing.Match> result = new ArrayList<Indexing.Match>();
+		ArrayList<Match> result = new ArrayList<Match>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path)))
 		{
 			int line_idx = 0;
