@@ -1,5 +1,5 @@
 import java.util.Scanner;
-
+import java.util.Map.Entry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -85,12 +85,11 @@ public class RegEx
 		  	if(motif.matches("[a-zA-Z]+"))
 		  	{
 			  	System.out.println("using radix...");
-			  	HashMap<String, ArrayList<Match>> matches = RadixTree.loadIndexingFromFile("src/test_file_indexing.txt");// en partant du principe que le cache du fichier à lire existe
+			  	HashMap<String, ArrayList<Match>> matches = RadixTree.loadIndexingFromFile("indexing.txt");// en partant du principe que le cache du fichier à lire existe
 			  	RadixTree radix = RadixTree.makeFromIndexing(matches);
 			  	RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matches);
 			  	List<Match> result = radix.patternIndexList(motif, 0);
 			  	List<Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(motif), 0);
-			  	Indexing indexing = new Indexing();
 			  	for(Match m : result_reverse)
 					result.add(new Match(m.line, m.index - motif.length()));
 			  	return result;
@@ -110,6 +109,110 @@ public class RegEx
 		  	return a.toDFA().makeMatches(path);
 	  	}
 		
+  	}
+  	
+  	
+    //TESTS
+    public static void runTests() throws Exception
+  	{
+  	  	
+  		//radix tests
+  		HashMap<Integer, ArrayList<Long>> radix_motif_perf = new HashMap<Integer, ArrayList<Long>>();
+  		HashMap<Integer, Double> radix_motif_perf_avg = new HashMap<Integer, Double>();
+  		HashMap<String, ArrayList<Match>> matches = RadixTree.loadIndexingFromFile("indexing.txt");// en partant du principe que le cache du fichier à lire existe
+  		Thread.sleep(4000);
+  		for(Entry<String, ArrayList<Match>> pair : matches.entrySet())
+  		{
+  			long startTime = System.currentTimeMillis();
+  			
+  			HashMap<String, ArrayList<Match>> matchesRed = RadixTree.loadIndexingFromFile("indexing.txt");// en partant du principe que le cache du fichier à lire existe
+  			RadixTree radix = RadixTree.makeFromIndexing(matchesRed);
+  			RadixTree radix_reverse = RadixTree.makeFromIndexingReverse(matchesRed);
+  			
+  			List<Match> result = radix.patternIndexList(pair.getKey(), 0);
+  			List<Match> result_reverse = radix_reverse.patternIndexList(RadixTree.reverse(pair.getKey()), 0);
+  			
+  			for(Match m : result_reverse)
+  				result.add(new Match(m.line, m.index - pair.getKey().length()));
+  			
+  			long stopTime = System.currentTimeMillis();
+  			long duration = stopTime - startTime;
+  			
+  			if(radix_motif_perf.containsKey(pair.getKey().length()))
+  				radix_motif_perf.get(pair.getKey().length()).add(duration);
+  			else
+  			{
+  				ArrayList<Long> tmp = new ArrayList<Long>();
+  				tmp.add(duration);
+  				radix_motif_perf.put(pair.getKey().length(), tmp);
+  			}
+  		}
+  		//System.out.println(radix_motif_perf);
+  		//average
+  		for(Entry<Integer, ArrayList<Long>> pair : radix_motif_perf.entrySet())
+  		{
+  			long sum = 0;
+  			int cpt = 0;
+  			for(long exec_time : pair.getValue())
+  			{
+  				sum += (double)exec_time;
+  				cpt++;
+  			}
+  			radix_motif_perf_avg.put(pair.getKey(), (double)sum/cpt);
+  		}
+  		System.out.println("radix : regEx size avg execution time for a same file");
+  		for(Entry<Integer, Double> pair : radix_motif_perf_avg.entrySet())
+  		{
+  			System.out.println(pair.getKey() + " " + pair.getValue());
+  		}
+
+  		
+  		
+  		//KMP tests
+  		
+  		HashMap<Integer, ArrayList<Long>> kmp_motif_perf = new HashMap<Integer, ArrayList<Long>>();
+  		HashMap<Integer, Double> kmp_motif_perf_avg = new HashMap<Integer, Double>();
+  		for(Entry<String, ArrayList<Match>> pair : matches.entrySet())
+  		{
+  			long startTime = System.currentTimeMillis();
+  			
+  			Kmp.makeMatches("src/test_file.txt", pair.getKey());
+  			
+  			long stopTime = System.currentTimeMillis();
+  			long duration = stopTime - startTime;
+  			
+  			if(kmp_motif_perf.containsKey(pair.getKey().length()))
+  				kmp_motif_perf.get(pair.getKey().length()).add(duration);
+  			else
+  			{
+  				ArrayList<Long> tmp = new ArrayList<Long>();
+  				tmp.add(duration);
+  				kmp_motif_perf.put(pair.getKey().length(), tmp);
+  			}
+  		}
+  		//System.out.println(kmp_motif_perf);
+  		//average
+  		for(Entry<Integer, ArrayList<Long>> pair : kmp_motif_perf.entrySet())
+  		{
+  			long sum = 0;
+  			int cpt = 0;
+  			for(long exec_time : pair.getValue())
+  			{
+  				sum += (double)exec_time;
+  				cpt++;
+  			}
+  			kmp_motif_perf_avg.put(pair.getKey(), (double)sum/cpt);
+  		}
+  		System.out.println("KMP : regEx size avg execution time for a same file");
+  		for(Entry<Integer, Double> pair : kmp_motif_perf_avg.entrySet())
+  		{
+  			System.out.println(pair.getKey() + " " + pair.getValue());
+  		}
+  		
+  		//automaton tests
+  		
+  		
+
   	}
   
   	//print

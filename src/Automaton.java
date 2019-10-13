@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Automaton
 {
@@ -363,9 +364,9 @@ public class Automaton
 		return res;
 	}
 	
-	public ArrayList<Match> makeMatches(String path) throws FileNotFoundException, IOException
+	public List<Match> makeMatches(String path) throws FileNotFoundException, IOException
 	{
-		ArrayList<Match> result = new ArrayList<Match>();
+		List<Match> result = new ArrayList<Match>();
 		try (BufferedReader br = new BufferedReader(new FileReader(path)))
 		{
 			int line_idx = 0;
