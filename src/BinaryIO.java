@@ -15,7 +15,8 @@ public class BinaryIO
 	
 	public static String readString(DataInputStream dis) throws IOException
 	{
-		return dis.readUTF();
+		String string = dis.readUTF();
+		return string;
 	}
 	
 	public static void writeMatch(DataOutputStream dos, Match match) throws IOException
@@ -88,8 +89,8 @@ public class BinaryIO
 	public static void writeRadixTree(DataOutputStream dos, RadixTree tree) throws IOException
 	{
 		writeString(dos, tree.prefix);
-		dos.writeBoolean(tree.terminal);
-		if(tree.terminal)
+		dos.writeBoolean(tree.matches != null);
+		if(tree.matches != null)
 			writeMatches(dos, tree.matches);
 		dos.writeBoolean(tree.next != null);
 		if(tree.next != null)
@@ -118,18 +119,24 @@ public class BinaryIO
 		{
 			if(has_child)
 			{
-				return new RadixTree(child, prefix, matches, next);
+				if(terminal)
+					return new RadixTree(child, prefix, matches, next);
+				else
+					return new RadixTree(child, prefix, next);
 			}
 			else
 			{
-				return new RadixTree(prefix, matches, next);
+				return new RadixTree(child, prefix, matches, next);
 			}
 		}
 		else
 		{
 			if(has_child)
 			{
-				return new RadixTree(child, prefix, matches);
+				if(terminal)
+					return new RadixTree(child, prefix, matches);
+				else
+					return new RadixTree(child, prefix);
 			}
 			else
 			{

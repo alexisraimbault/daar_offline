@@ -22,15 +22,14 @@ public class RadixTree implements java.io.Serializable {
 	public RadixTree next;
 	public RadixTree child;
 	public String prefix;
-	public boolean terminal;
 	public List<Match> matches;
 	public static Indexing indexing = new Indexing();
+	
 	
 	public RadixTree(String prefix, List<Match> matches)
 	{
 		this.child = null;
 		this.prefix = prefix;
-		this.terminal = true;
 		this.matches = matches;
 		this.next = null;
 	}
@@ -39,7 +38,6 @@ public class RadixTree implements java.io.Serializable {
 	{
 		this.child = null;
 		this.prefix = prefix;
-		this.terminal = false;
 		this.matches = null;
 		this.next = null;
 	}
@@ -48,7 +46,6 @@ public class RadixTree implements java.io.Serializable {
 	{
 		this.child = child;
 		this.prefix = prefix;
-		this.terminal = false;
 		this.matches = null;
 		this.next = null;
 	}
@@ -57,7 +54,6 @@ public class RadixTree implements java.io.Serializable {
 	{
 		this.child = child;
 		this.prefix = prefix;
-		this.terminal = true;
 		this.matches = matches;
 		this.next = null;
 	}
@@ -66,7 +62,6 @@ public class RadixTree implements java.io.Serializable {
 	{
 		this.child = child;
 		this.prefix = prefix;
-		this.terminal = false;
 		this.matches = null;
 		this.next = next;
 	}
@@ -75,19 +70,8 @@ public class RadixTree implements java.io.Serializable {
 	{
 		this.child = child;
 		this.prefix = prefix;
-		this.terminal = true;
 		this.matches = matches;
 		this.next = next;
-	}
-
-	// TODO DELETE
-	public RadixTree(RadixTree child, String prefix, boolean terminal, List<Match> matches)
-	{
-		this.child = child;
-		this.prefix = prefix;
-		this.terminal = false;
-		this.matches = null;
-		this.next = null;
 	}
 	
 	public RadixTree() {
@@ -139,10 +123,80 @@ public class RadixTree implements java.io.Serializable {
 		return sb.reverse().toString();
 	}
 	
+	public void addWord(String word, ArrayList<Match> matches)
+	{
+		addWord(word, matches, 0);
+	}
+	
+	public void addWord(String word, ArrayList<Match> matches, int word_idx)
+	{
+		int start_word_idx = word_idx;
+		for(int prefix_idx = 0; prefix_idx < this.prefix.length(); ++prefix_idx, ++word_idx)
+		{
+			// word is a part of prefix, split prefix
+			if(word_idx == word.length()) // implies that prefix_idx >= 1
+			{
+				this.child = new RadixTree(this.child, prefix.substring(prefix_idx), this.matches);
+				this.matches = matches;
+				return;
+			}
+			
+			// same letter, continue
+			System.out.println(prefix_idx + " " + prefix.length() + " " + word_idx + " " + word.length());
+			if(prefix.charAt(prefix_idx) == word.charAt(word_idx))
+				continue;
+			// letter different
+			else
+			{
+				// prefix completely different, go next
+				if(prefix_idx == 0)
+				{
+					if(this.next == null)
+						this.next = new RadixTree(word.substring(word_idx), matches);
+					else
+						this.next.addWord(word, matches, word_idx);
+				}
+				// prefix is a part of the word, split prefix
+				else
+				{
+					this.child = new RadixTree(this.child, prefix.substring(prefix_idx), this.matches);
+					this.child.addWord(word, matches, word_idx);
+					this.prefix = prefix.substring(0, prefix_idx);
+					this.matches = null;
+				}
+				return;
+			}
+		}
+		
+		// prefix continues the word
+		
+		// word ends
+		if(word_idx == word.length())
+		{
+			if(this.matches == null)
+				this.matches = matches;
+			else
+				this.matches.addAll(matches);
+		}
+		// word continues
+		else
+		{
+			if(this.child == null)
+				this.child = new RadixTree(word.substring(word_idx), matches);
+			else
+				this.child.addWord(word, matches, word_idx);
+		}
+	}
+	
 	public void addWord2(String word, ArrayList<Match> matches)
 	{
 		if(this.prefix.equals(word))
-			this.terminal = true;
+		{
+			if(this.matches == null)
+				this.matches = matches;
+			else
+				this.matches.addAll(matches);
+		}
 		else
 		{
 			if(this.prefix.length() < word.length() && word.startsWith(this.prefix))
@@ -150,17 +204,16 @@ public class RadixTree implements java.io.Serializable {
 				if(this.child != null)
 					this.child.addWord2(word.substring(this.prefix.length()), matches);
 				else
-					this.child = new RadixTree(null, word.substring(this.prefix.length()), true, matches);
+					this.child = new RadixTree(null, word.substring(this.prefix.length()), matches);
 			}
 				
 			else
 			{
 				if(word.length() < this.prefix.length() && this.prefix.startsWith(word))
 				{
-					RadixTree tmpChild = new RadixTree(this.child,this.prefix.substring(word.length()), this.terminal, this.matches);
+					RadixTree tmpChild = new RadixTree(this.child,this.prefix.substring(word.length()), this.matches);
 					this.child = tmpChild;
 					this.prefix = this.prefix.substring(0, word.length());
-					this.terminal = true;
 					this.matches = matches;
 				}
 				else{
@@ -169,18 +222,17 @@ public class RadixTree implements java.io.Serializable {
 						cpt_identiques ++;
 					if(cpt_identiques > 0)
 					{
-						RadixTree tmpChild = new RadixTree(null,word.substring(cpt_identiques), this.terminal, matches);
-						RadixTree tmpChild2 = new RadixTree(this.child,this.prefix.substring(cpt_identiques), this.terminal, this.matches);
+						RadixTree tmpChild = new RadixTree(null,word.substring(cpt_identiques), matches);
+						RadixTree tmpChild2 = new RadixTree(this.child,this.prefix.substring(cpt_identiques), this.matches);
 						tmpChild.next = tmpChild2;
 						this.child = tmpChild;
 						this.prefix = this.prefix.substring(0, cpt_identiques);
-						this.terminal = true;	
 					}else
 					{
 						if(this.next != null)
 							this.next.addWord2(word, matches);
 						else{
-							this.next = new RadixTree(null, word, true, matches);
+							this.next = new RadixTree(null, word, matches);
 						}
 					}
 				}
@@ -257,7 +309,7 @@ public class RadixTree implements java.io.Serializable {
 			if(idx == prefix.length())//all prefix letters in common -> child or found word
 			{
 				if(word_idx == word.length())// found word
-					if (terminal)
+					if (matches != null)
 					{
 						//System.out.println(prefix);//debug
 						return getMatches(true);
@@ -333,7 +385,7 @@ public class RadixTree implements java.io.Serializable {
 		File f = new File(path);
 	    FileInputStream inputStream = new FileInputStream(f);
 	    Scanner sc = new Scanner(inputStream, "UTF-8");
-	    while (sc.hasNextLine()) 
+	    while (sc.hasNextLine())
 	    {
 	       String line = sc.nextLine();
 	       String[] index = line.split(" ");
@@ -515,13 +567,13 @@ public class RadixTree implements java.io.Serializable {
 		else
 		{
 			if(this.next == null)
-				return this.prefix +  this.matches + "(" + this.child.toString() + ")";
+				return this.prefix +  (this.matches != null ? this.matches : "") + "(" + this.child.toString() + ")";
 			else
 			{
 				if(this.child == null)
 					return this.prefix +  this.matches  + "," + this.next.toString();
 				else
-					return this.prefix  + this.matches + "(" + this.child.toString() + ")" + "," + this.next.toString();
+					return this.prefix  + (this.matches != null ? this.matches : "") + "(" + this.child.toString() + ")" + "," + this.next.toString();
 			}
 		}
 		
@@ -537,14 +589,19 @@ public class RadixTree implements java.io.Serializable {
 			HashMap<String, ArrayList<Match>> matches = indexing.makeMatches("src/test_file.txt");
 			RadixTree radix = makeFromIndexing(matches);
 			
+			System.out.println("writing...");
 			DataOutputStream dos = new DataOutputStream(new FileOutputStream ("radix_binary.txt"));
-			BinaryIO.writeRadixTree(dos, radix);
-			
+			BinaryIO.writeRadixTree(dos, radix); dos.flush();
+			dos.close();
+
+			System.out.println("reading...");
 			DataInputStream dis = new DataInputStream(new FileInputStream ("radix_binary.txt"));
 			RadixTree radixRed = BinaryIO.readRadixTree(dis);
-			
-			System.out.println(radix);
-			System.out.println(radixRed);
+			dis.close();
+
+
+			//System.out.println(radixRed.toString());
+			//System.out.println(radix.toString().equals(radixRed.toString()));
 			//RadixTree radix_reverse = makeFromIndexingReverse(matches);
 			//System.out.println(radix);
 			//System.out.println(radix_reverse);
