@@ -134,6 +134,45 @@ public class RadixTree implements java.io.Serializable {
 		}
 	}
 	
+	public ArrayList<Indexing.Match> getMatches(boolean firstCall)
+	{
+		ArrayList<Indexing.Match> result = this.matches;
+		if(this.child == null && this.next == null)
+			return result;
+		else{
+			if(this.next == null)
+			{
+				result = new ArrayList<Indexing.Match>();
+				result.addAll(this.child.getMatches(false));
+				return result;
+			}else
+			{
+				if(firstCall)
+				{
+					if(this.child == null)
+					{
+						return result;
+					}else
+					{
+						result.addAll(this.child.getMatches(false));
+						return result;
+					}
+				}else
+				if(this.child == null)
+				{
+					result.addAll(this.next.getMatches(false));
+					return result;
+				}else
+				{
+					result.addAll(this.child.getMatches(false));
+					result.addAll(this.next.getMatches(false));
+					return result;
+				}
+			}
+		}
+		
+	}
+	
 	public ArrayList<Indexing.Match> patternIndexList(String word, int word_idx)
 	{
 		int save_word_idx = word_idx;
@@ -141,7 +180,7 @@ public class RadixTree implements java.io.Serializable {
 		if(word.length() - word_idx < prefix.length())
 		{
 			if(prefix.charAt(0)==word.charAt(word_idx) && prefix.startsWith(word.substring(word_idx, word.length())))//word is a prefix of a word in the text
-				return matches;
+				return getMatches(true);
 			if(next != null)
 				return next.patternIndexList(word, word_idx);
 			else
@@ -167,7 +206,7 @@ public class RadixTree implements java.io.Serializable {
 					if (terminal)
 					{
 						//System.out.println(prefix);//debug
-						return matches;
+						return getMatches(true);
 					}
 					else
 						return new ArrayList<Indexing.Match>();
